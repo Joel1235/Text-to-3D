@@ -10,9 +10,9 @@ prompt = f"""
     """
 
 def validate_user_input(user_input: str) -> bool:
-    llm_url = "https://pgazureaideplo6829607801.openai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2024-08-01-preview"
     llm_prompt = prompt + user_input
     api_key = os.getenv("API_KEY")
+    llm_url = os.getenv("LLM_URL")
 
     payload = {
         "messages": [
