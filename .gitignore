@@ -1,2 +1,5 @@
-key.txt
-*.pyc
+venv
+data/ModelNet40
+data/archive.zip
+.env
+.idea
