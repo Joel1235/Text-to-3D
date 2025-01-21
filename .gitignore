@@ -3,3 +3,4 @@ data/ModelNet40
 data/archive.zip
 .env
 .idea
+.venv
