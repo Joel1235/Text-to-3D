@@ -1,6 +1,9 @@
-requests
-python-dotenv
-pandas
+streamlit
 trimesh
+pandas
+numpy
 scikit-learn
 sentence-transformers
+plotly
+requests
+python-dotenv
