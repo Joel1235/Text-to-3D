@@ -62,24 +62,24 @@ def process_request():
     print(object_list)
 
     user_input = input("Enter your request: ")
-
+    #Check is user input is sensible for a CAD model genraiton
     if not validate_input(user_input):
         print("Input was invalid, ask for a 3D model")
         return
 
     print("Input was valid, continue process")
-    best_match = find_best_match(user_input, object_list)
+    best_match = find_best_match(user_input, object_list)   #Apply RAG to retrieve best matching exsiting model
     print(f"Best object in data: {best_match}")
 
     if assess_model_match(user_input, best_match):
         generation_object = generate_3d_model(user_input)
         print("Object which will get generated: " + generation_object)
-        meshy_generation_id, message = generate_3d_meshy(generation_object)
+        meshy_generation_id, message = generate_3d_meshy(generation_object) #generate model with meshy if there is no matching existing model
 
         if meshy_generation_id is None:
             logging.error(f"Meshy generation failed: {message}. Try again in a few minutes.")
 
-        if wait_fo_meshy_generation(meshy_generation_id):
+        if wait_fo_meshy_generation(meshy_generation_id):   #wait for meshy generation and visualize when finished
             model_filename = download_meshy_model(meshy_generation_id)
             if model_filename:
                 mesh = trimesh.load(model_filename)

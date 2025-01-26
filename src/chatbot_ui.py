@@ -16,7 +16,7 @@ import plotly.figure_factory as ff
 st.set_page_config(page_title="3D Chatbot", layout="wide")
 
 # Title/Heading
-st.title("3D Model Assistant")
+st.title("DDE - CAD Model AI-Assistant")
 
 # Initialize session state for messages
 if "messages" not in st.session_state:
@@ -25,13 +25,13 @@ if "messages" not in st.session_state:
 if "loading" not in st.session_state:
     st.session_state.loading = False
 
-# Load the pre-trained model
+#Load the pre-trained model
 model = SentenceTransformer('all-MiniLM-L6-v2')
 objects_path = os.path.join(os.getcwd(), "models", "objects.csv")
 object_list = pd.read_csv(objects_path)["Filename"].tolist()
 
 
-# Prompts
+##### Prompts  #####
 def get_validation_prompt(user_input):
     return f"""
     Determine if the following input is a reasonable request for generating a 3D object. 
@@ -86,10 +86,12 @@ if st.button("Send", disabled=st.session_state.loading):
         if user_input:
             st.session_state.messages.append(("You", user_input))
 
+            #Validate if users made a sensible input for a CAD model generation
             if validate_input(user_input):
                 st.session_state.messages.append(("Bot", "Processing your request..."))
                 best_match = find_best_match(user_input)
 
+                # Validate best matching existing CAD model would satisfy users input
                 if assess_model_match(user_input, best_match):
                     generation_object = generate_3d_model(user_input)
                     meshy_generation_id, message = generate_3d_meshy(generation_object)
@@ -100,10 +102,13 @@ if st.button("Send", disabled=st.session_state.loading):
                     with st.spinner("Generating 3D model, please wait..."):
                         if wait_fo_meshy_generation(meshy_generation_id):
                             model_filename = download_meshy_model(meshy_generation_id)
+
+                #if there is a matching and valid existing model, give back the existing CAD model, generate with meshy otherwise
                 else:
                     model_filename = os.path.join(os.getcwd(), "models", f"{best_match}.stl")
 
                 if model_filename:
+                    #Load and visualize model
                     mesh = trimesh.load(model_filename)
                     if isinstance(mesh, trimesh.Scene):
                         mesh = mesh.dump(concatenate=True)
