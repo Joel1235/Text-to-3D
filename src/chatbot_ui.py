@@ -4,6 +4,8 @@ import os
 import pandas as pd
 import numpy as np
 import time
+import logging
+
 from sklearn.metrics.pairwise import cosine_similarity
 from sentence_transformers import SentenceTransformer
 from services.llm_service import llm_req
@@ -20,12 +22,16 @@ st.title("3D Model Assistant")
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+if "loading" not in st.session_state:
+    st.session_state.loading = False
+
 # Load the pre-trained model
 model = SentenceTransformer('all-MiniLM-L6-v2')
 objects_path = os.path.join(os.getcwd(), "models", "objects.csv")
 object_list = pd.read_csv(objects_path)["Filename"].tolist()
 
 
+# Prompts
 def get_validation_prompt(user_input):
     return f"""
     Determine if the following input is a reasonable request for generating a 3D object. 
@@ -54,6 +60,7 @@ def validate_input(user_input):
     return llm_req(validation_prompt, "").lower() == "true"
 
 
+#RAG for finding the best stored CAD model for the users input
 def find_best_match(user_input):
     class_embeddings = model.encode(object_list)
     input_embedding = model.encode([user_input])
@@ -61,6 +68,7 @@ def find_best_match(user_input):
     return object_list[similarities.argmax()]
 
 
+#LLM evaluates how good the best stored CAD model matches the users input
 def assess_model_match(user_input, best_match):
     prompt = get_matching_prompt(user_input, best_match)
     return llm_req(prompt, "").lower() == "false"
@@ -71,45 +79,57 @@ def generate_3d_model(user_input):
     return llm_req(prompt, "")
 
 
-user_input = st.text_input("Type a message here...")
-if st.button("Send"):
-    if user_input:
-        st.session_state.messages.append(("You", user_input))
+user_input = st.text_input("Enter your request here. For example, create a CAD model of a car.")
+if st.button("Send", disabled=st.session_state.loading):
+    st.session_state.loading = True
+    try:
+        if user_input:
+            st.session_state.messages.append(("You", user_input))
 
-        if validate_input(user_input):
-            st.session_state.messages.append(("Bot", "Processing your request..."))
-            best_match = find_best_match(user_input)
+            if validate_input(user_input):
+                st.session_state.messages.append(("Bot", "Processing your request..."))
+                best_match = find_best_match(user_input)
 
-            if assess_model_match(user_input, best_match):
-                generation_object = generate_3d_model(user_input)
-                meshy_generation_id = generate_3d_meshy(generation_object)
-                st.session_state.messages.append(("Bot", "Generating 3D model, please wait..."))
+                if assess_model_match(user_input, best_match):
+                    generation_object = generate_3d_model(user_input)
+                    meshy_generation_id, message = generate_3d_meshy(generation_object)
+                    if meshy_generation_id is None:
+                        logging.error(f"Meshy generation failed: {message}. Try again in a few minutes.")
+                    st.session_state.messages.append(("Bot", "Generating 3D model, please wait..."))
 
-                if wait_fo_meshy_generation(meshy_generation_id):
-                    model_filename = download_meshy_model(meshy_generation_id)
+                    with st.spinner("Generating 3D model, please wait..."):
+                        if wait_fo_meshy_generation(meshy_generation_id):
+                            model_filename = download_meshy_model(meshy_generation_id)
+                else:
+                    model_filename = os.path.join(os.getcwd(), "models", f"{best_match}.stl")
+
+                if model_filename:
+                    mesh = trimesh.load(model_filename)
+                    if isinstance(mesh, trimesh.Scene):
+                        mesh = mesh.dump(concatenate=True)
+                    vertices, faces = mesh.vertices, mesh.faces
+                    x, y, z = vertices.T
+                    i, j, k = faces.T
+                    fig = ff.create_trisurf(x=x, y=y, z=z, simplices=np.c_[i, j, k])
+                    fig.update_layout(scene=dict(aspectmode="data", camera_eye=dict(x=1.5, y=1.5, z=1.5)))
+
+                    st.markdown(
+                        "<div style='display: flex; justify-content: center; align-items: center;'>",
+                        unsafe_allow_html=True,
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+                    st.markdown("</div>", unsafe_allow_html=True)
+
+                    st.session_state.messages.append(("Bot", "Here is your 3D model."))
+                else:
+                    st.error("Something went wrong. Please try again in a few minutes.")
             else:
-                model_filename = os.path.join(os.getcwd(), "models", f"{best_match}.stl")
-
-            if model_filename:
-                mesh = trimesh.load(model_filename)
-                if isinstance(mesh, trimesh.Scene):
-                    mesh = mesh.dump(concatenate=True)
-                vertices, faces = mesh.vertices, mesh.faces
-                x, y, z = vertices.T
-                i, j, k = faces.T
-                fig = ff.create_trisurf(x=x, y=y, z=z, simplices=np.c_[i, j, k])
-                fig.update_layout(scene=dict(aspectmode="data", camera_eye=dict(x=1.5, y=1.5, z=1.5)))
-
-                st.markdown(
-                    "<div style='display: flex; justify-content: center; align-items: center;'>",
-                    unsafe_allow_html=True,
-                )
-                st.plotly_chart(fig, use_container_width=True)
-                st.markdown("</div>", unsafe_allow_html=True)
-
-                st.session_state.messages.append(("Bot", "Here is your 3D model."))
-        else:
-            st.session_state.messages.append(("Bot", "Invalid request. Please try again."))
+                st.session_state.messages.append(("Bot", "Invalid request. Please try again."))
+    except Exception as e:
+        logging.error(f"An error occurred: {e}")
+        st.error("Something went wrong. Please refresh the page and try again.")
+    finally:
+        st.session_state.loading = False
 
 for speaker, msg in st.session_state.messages:
     if speaker == "You":

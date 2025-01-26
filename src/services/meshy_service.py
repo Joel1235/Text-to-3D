@@ -22,8 +22,11 @@ def generate_3d_meshy(user_input: str):
     #response.raise_for_status()  #TODO: maybe return a second string which indicates if the creation was successfully commissioned
 
     data = response.json()
-    result_id = data["result"]
-    return result_id
+    try:
+        result_id = data["result"]
+        return result_id, "Success"
+    except KeyError:
+        return None, "Meshy generation failed, try again in a few minutes"
 
 def download_meshy_model(result_id: str):
     model_url = f"{meshy_url}/{result_id}"

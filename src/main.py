@@ -3,18 +3,18 @@ import os
 import trimesh
 import time
 import datetime
+import logging
+
 from sklearn.metrics.pairwise import cosine_similarity
 from sentence_transformers import SentenceTransformer
 from services.llm_service import llm_req
 from services.meshy_service import generate_3d_meshy, download_meshy_model, wait_fo_meshy_generation
 
-# Initialize model
-model = SentenceTransformer('all-MiniLM-L6-v2')
 
-# Paths
+model = SentenceTransformer('all-MiniLM-L6-v2')
 objects_path = os.path.join(os.getcwd(), "models", "objects.csv")
 
-# Prompts
+#Prompts
 def get_validation_prompt(user_input):
     return f"""
     Determine if the following input is a reasonable request for generating a 3D object. 
@@ -56,6 +56,7 @@ def generate_3d_model(user_input):
     sys_prompt = "You are an AI assistant specializing in accurately extracting object descriptions for 3D model generation, ensuring all key attributes and details from user input are preserved."
     return llm_req(prompt, sys_prompt)
 
+#Main process of processing user request
 def process_request():
     object_list = pd.read_csv(objects_path)["Filename"].tolist()
     print(object_list)
@@ -73,12 +74,18 @@ def process_request():
     if assess_model_match(user_input, best_match):
         generation_object = generate_3d_model(user_input)
         print("Object which will get generated: " + generation_object)
-        meshy_generation_id = generate_3d_meshy(generation_object)
+        meshy_generation_id, message = generate_3d_meshy(generation_object)
+
+        if meshy_generation_id is None:
+            logging.error(f"Meshy generation failed: {message}. Try again in a few minutes.")
 
         if wait_fo_meshy_generation(meshy_generation_id):
             model_filename = download_meshy_model(meshy_generation_id)
-            mesh = trimesh.load(model_filename)
-            mesh.show()
+            if model_filename:
+                mesh = trimesh.load(model_filename)
+                mesh.show()
+            else:
+                logging.error("Failed to download the 3D model from meshy. Try again in a few minutes")
     else:
         cad_model_path = os.path.join(os.getcwd(), "models", f"{best_match}.stl")
         print(f"Open CAD model file: {cad_model_path}")
