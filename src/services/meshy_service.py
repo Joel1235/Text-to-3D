@@ -35,7 +35,7 @@ def download_meshy_model(result_id: str):
     response = requests.get(glb_url)
 
     filename = datetime.datetime.now().strftime("model_%Y%m%d_%H%M%S.glb")
-    path = r"C:\Dev_Projects\Text-to-3D\generated_models"
+    path = os.path.join(os.getcwd(), "generated_models")
     full_path = f"{path}\\{filename}"
     with open(full_path, "wb") as file:
         file.write(response.content)
@@ -44,31 +44,17 @@ def download_meshy_model(result_id: str):
     # mesh.show()
     return full_path
 
-#generation_id = generate_3d_meshy("A helicopter")
-#downlaod_meshy_model(generation_id)
+def wait_fo_meshy_generation(result_id: str, max_attempts=30, interval = 5):
+    headers = {"Authorization": f"Bearer {api_key}"}
+    for _ in range(max_attempts):
+        response = requests.get(f"{meshy_url}/{result_id}", headers=headers)
+        response.raise_for_status()
+        task_status = response.json()
 
-
-
-
-
-#generate_3d_meshy()
-
-
-"""result_text = "{'result': '019479b0-c088-75ae-b831-f19b4900bb3a'} # This is what meshy gives you back"
-result_id = "019479b0-c088-75ae-b831-f19b4900bb3a"
-url = f"https://api.meshy.ai/openapi/v2/text-to-3d/{result_id}"
-headers = {"Authorization": f"Bearer {api_key}"}
-response = requests.get(url, headers=headers)
-print(response.json())
-
-data = response.json()
-glb_url = data["model_urls"]["glb"]
-response = requests.get(glb_url)
-
-with open("model.glb", "wb") as file:
-    file.write(response.content)
-print("Model downloaded successfully!")
-
-mesh = trimesh.load("model.glb")
-mesh.show()"""
-
+        if task_status["status"] == "SUCCEEDED":
+            print("3D model meshy generation completed ")
+            return True
+        print(f"Status: {task_status['status']} | Progress: {task_status.get('progress', 'N/A')} | Retrying in {interval}s...")
+        time.sleep(interval)
+    print("Time out waiting for 3D model meshy generation")
+    return False

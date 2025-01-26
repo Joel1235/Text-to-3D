@@ -1,4 +1,7 @@
+system_prompt = "You are an AI assistant responsible for validating user inputs for 3D model generation. Your goal is to allow creative and descriptive requests while filtering out irrelevant or nonsensical inputs."
+
 PROMPT_VALIDATION = f"""
-    Validate if the input is a valid request for a 3D object. A valid input should specify a clear, singular object (e.g., "I want a 3D model of a chair"). 
-    If valid, respond with "true". If not, respond with "false". Do not output anything else. 
-    Input: """
+Determine if the following input is a reasonable request for generating a 3D object. 
+Valid requests should describe a tangible or conceptual object that can be visualized in 3D, even if creatively described. 
+If the input is appropriate, respond with "true". If it is irrelevant, nonsensical, or unrelated to 3D objects, respond with "false". No additional text or explanations.
+Input: """
