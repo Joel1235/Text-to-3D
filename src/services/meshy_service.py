@@ -35,7 +35,7 @@ def download_meshy_model(result_id: str):
     response = requests.get(glb_url)
 
     filename = datetime.datetime.now().strftime("model_%Y%m%d_%H%M%S.glb")
-    path = os.path.join(os.getcwd(), "generated_models")
+    path = os.path.join(os.getcwd(), "models")
     full_path = f"{path}\\{filename}"
     with open(full_path, "wb") as file:
         file.write(response.content)

@@ -13,7 +13,6 @@ from services.meshy_service import download_meshy_model
 from services.meshy_service import wait_fo_meshy_generation
 
 model = SentenceTransformer('all-MiniLM-L6-v2')
-dataset_path = os.path.join(os.getcwd(), "data", "ModelNet40")
 validation_sys_prompt = "You are an AI assistant responsible for validating user inputs for 3D model generation. Your goal is to allow creative and descriptive requests while filtering out irrelevant or nonsensical inputs."
 
 validation_prompt = f"""
@@ -23,8 +22,9 @@ If the input is appropriate, respond with "true". If it is irrelevant, nonsensic
 Input: """
 
 
-classes = [d.name for d in os.scandir(dataset_path) if d.is_dir()]
-print(classes)
+objects_path = os.path.join(os.getcwd(), "models", "objects.csv")
+object_list = pd.read_csv(objects_path)["Filename"].tolist()
+print(object_list)
 #user_input = "Give me a 3D model of a Truck"
 user_input = input("Enter your request: ")
 validation_response = llm_req(validation_prompt + user_input, validation_sys_prompt)
@@ -33,11 +33,11 @@ input_valid: bool = validation_response.lower() == "true"
 if input_valid:
     print("Input was valid, continue process")
     # embed and get best object class
-    class_embeddings = model.encode(classes)
+    class_embeddings = model.encode(object_list)
     input_embedding = model.encode([user_input])
     similarities = cosine_similarity(input_embedding, class_embeddings)
-    best_match = classes[similarities.argmax()]
-    print(f"best class in data: {best_match}")
+    best_match = object_list[similarities.argmax()]
+    print(f"best object in data: {best_match}")
 
     system_prompt_1 = "You are an expert in 3D model retrieval and user satisfaction analysis. Your task is to assess whether a proposed 3D model aligns with user expectations."
     prompt_1 = f"""
@@ -62,11 +62,11 @@ if input_valid:
             mesh = trimesh.load(model_filename)
             mesh.show()
     else:
-        cad_model_path = os.path.join(dataset_path, best_match, "test")
-        first_file_path = next((os.path.join(cad_model_path, f) for f in os.listdir(cad_model_path) if f.endswith('.off')), None) #for now we can just take the first valid 3d model in the files with the matching class
-        if first_file_path:
-            print(f"First .off file path: {first_file_path}")
-            mesh = trimesh.load(first_file_path)
+        model_path = os.path.join(os.getcwd(), "models")
+        cad_model_path = os.path.join(model_path, f"{best_match}.stl")
+        if cad_model_path:
+            print(f"Open Cad mdoel file: {cad_model_path}")
+            mesh = trimesh.load(cad_model_path)
             mesh.show()
 else:
     print("Input was invalid, ask for a 3D model")
