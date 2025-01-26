@@ -52,7 +52,7 @@ def download_meshy_model(result_id: str):
 
 
 #Check regularly if meshy generation is finished
-def wait_fo_meshy_generation(result_id: str, max_attempts=30, interval = 5):
+def wait_fo_meshy_generation(result_id: str, max_attempts=60, interval = 5):
     headers = {"Authorization": f"Bearer {api_key}"}
     for _ in range(max_attempts):
         response = requests.get(f"{meshy_url}/{result_id}", headers=headers)
