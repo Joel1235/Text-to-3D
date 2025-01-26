@@ -108,6 +108,14 @@ if st.button("Send", disabled=st.session_state.loading):
                     model_filename = os.path.join(os.getcwd(), "models", f"{best_match}.stl")
 
                 if model_filename:
+                    #enable to downlaod
+                    with open(model_filename, "rb") as file:
+                        st.download_button(
+                            label="Download 3D Model",
+                            data=file,
+                            file_name=os.path.basename(model_filename),
+                            mime="application/octet-stream",
+                        )
                     #Load and visualize model
                     mesh = trimesh.load(model_filename)
                     if isinstance(mesh, trimesh.Scene):
