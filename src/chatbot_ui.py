@@ -98,7 +98,15 @@ if st.button("Send"):
                 x, y, z = vertices.T
                 i, j, k = faces.T
                 fig = ff.create_trisurf(x=x, y=y, z=z, simplices=np.c_[i, j, k])
-                st.plotly_chart(fig)
+                fig.update_layout(scene=dict(aspectmode="data", camera_eye=dict(x=1.5, y=1.5, z=1.5)))
+
+                st.markdown(
+                    "<div style='display: flex; justify-content: center; align-items: center;'>",
+                    unsafe_allow_html=True,
+                )
+                st.plotly_chart(fig, use_container_width=True)
+                st.markdown("</div>", unsafe_allow_html=True)
+
                 st.session_state.messages.append(("Bot", "Here is your 3D model."))
         else:
             st.session_state.messages.append(("Bot", "Invalid request. Please try again."))
