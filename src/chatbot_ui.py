@@ -108,6 +108,11 @@ if st.button("Send", disabled=st.session_state.loading):
                     model_filename = os.path.join(os.getcwd(), "models", f"{best_match}.stl")
 
                 if model_filename:
+                    #before download, convert to stl
+                    if model_filename.endswith(".glb"):
+                        mesh = trimesh.load(model_filename)
+                        model_filename = model_filename.replace(".glb", ".stl")
+                        mesh.export(model_filename)
                     #enable to downlaod
                     with open(model_filename, "rb") as file:
                         st.download_button(
