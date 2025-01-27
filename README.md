@@ -62,9 +62,16 @@ If you'd prefer to run the project locally, follow these steps:
 
 If the new UI contains bugs or you prefer a command-line approach, you can still generate 3D models using our classic terminal-based script:
 
+1. **Run the script**:
 ```bash
 python src/main.py
 ```
+2. **Enter your Request**: The script asks you to enter a request a CAD model. For instance use
+```
+"Give me a CAD model of a sportscar" 
+```
+3. **Model generation**: The script uses RAG of MeshyAPI to generate the model.
+The model is saved in the models folder. The script will reutrn you the exact locate you 3D model is saved to.
 
 ## ⚠ Known Issues
 

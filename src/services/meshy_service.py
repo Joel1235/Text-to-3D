@@ -48,6 +48,7 @@ def download_meshy_model(result_id: str):
     with open(full_path, "wb") as file:
         file.write(response.content)
     logging.info("Model downloaded: %s", full_path)
+    print("Your model was generated and is saved at: " + full_path)
     return full_path
 
 

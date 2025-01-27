@@ -37,7 +37,7 @@ def get_generation_prompt(user_input):
 
 def validate_input(user_input):
     validation_prompt = get_validation_prompt(user_input)
-    sys_prompt = "You are an AI assistant responsible for validating user inputs for 3D model generation. Your goal is to allow creative and descriptive requests while filtering out irrelevant or nonsensical inputs."
+    sys_prompt = "You are an AI assistant responsible for validating user inputs for 3D model generation. Your goal is to allow creative and descriptive requests while filtering out irrelevant or nonsensical inputs. Every request regarding an object is valid."
     return llm_req(validation_prompt, sys_prompt).lower() == "true"
 
 def find_best_match(user_input, object_list):
@@ -59,9 +59,8 @@ def generate_3d_model(user_input):
 #Main process of processing user request
 def process_request():
     object_list = pd.read_csv(objects_path)["Filename"].tolist()
-    print(object_list)
 
-    user_input = input("Enter your request: ")
+    user_input = input("Enter your request here. For example: 'Create a CAD model of a car':\n>")
     #Check is user input is sensible for a CAD model genraiton
     if not validate_input(user_input):
         print("Input was invalid, ask for a 3D model")
@@ -82,6 +81,10 @@ def process_request():
         if wait_fo_meshy_generation(meshy_generation_id):   #wait for meshy generation and visualize when finished
             model_filename = download_meshy_model(meshy_generation_id)
             if model_filename:
+                if model_filename.endswith(".glb"):
+                    mesh = trimesh.load(model_filename)
+                    model_filename = model_filename.replace(".glb", ".stl")
+                    mesh.export(model_filename)
                 mesh = trimesh.load(model_filename)
                 mesh.show()
             else:
