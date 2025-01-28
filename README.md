@@ -71,7 +71,7 @@ python src/main.py
 "Give me a CAD model of a sportscar" 
 ```
 3. **Model generation**: The script uses RAG of MeshyAPI to generate the model.
-The model is saved in the models folder. The script will reutrn you the exact locate you 3D model is saved to.
+The model is saved in the 'models' folder. The script will return you the exact locate you 3D model is saved to.
 
 ## ⚠ Known Issues
 
