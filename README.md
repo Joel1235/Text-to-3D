@@ -9,6 +9,8 @@ Check out the fastest way to test our app via the live demo, which we deployed w
 
 🔗 **[Live Demo on Streamlit](https://joeldag.streamlit.app/)**
 
+![How to Run](tools/demo.gif)
+
 All in all the live demo should be robust with some restrictions: 
 Please be aware that the meshy generation does not work if multiple users use it simultaneously.
 The life demo might not be perfect and might contain bugs, e.g. clicking multiple times on the send button might bring the meshy generation to failure.
