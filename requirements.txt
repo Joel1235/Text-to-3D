@@ -7,3 +7,4 @@ sentence-transformers
 plotly
 requests
 python-dotenv
+pyglet<2
